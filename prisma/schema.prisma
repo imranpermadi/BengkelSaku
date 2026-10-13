@@ -1,0 +1,171 @@
+// BengkelSaku Prisma Schema (PostgreSQL 18 + pgvector)
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  // extensions = [pgvector(map: "vector")] // Aktifkan jika ekstensi pgvector sudah terpasang di PostgreSQL Windows
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id            String               @id @default(cuid())
+  name          String?
+  email         String?              @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  vehicles      VehicleProfile[]
+  targetCars    TargetCar[]
+  chatMessages  ChatMessage[]
+  auditLogs     DiagnosticAuditLog[]
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VehicleProfile {
+  id              String           @id @default(cuid())
+  userId          String
+  make            String           // e.g. "Toyota", "Honda"
+  model           String           // e.g. "Avanza Veloz", "Brio Satya"
+  year            Int              // e.g. 2018
+  licensePlate    String?          // e.g. "B 1234 CD"
+  vin             String?          // Nomor rangka
+  currentOdometer Int              @default(0) // Satuan: KM
+  lastServiceDate DateTime?
+  imageUrl        String?
+  images          String[]         @default([]) // Galeri foto mobil
+  manualGuideText String?          @db.Text
+  manualFileName  String?
+  maintenanceLogs MaintenanceLog[]
+  repairLogs      RepairLog[]
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  // Composite index untuk dashboard query cepat
+  @@index([userId, currentOdometer])
+}
+
+model MaintenanceLog {
+  id             String         @id @default(cuid())
+  vehicleId      String
+  vehicleName    String?
+  serviceType    String         // e.g. "GANTI_OLI_MESIN", "KAMPAS_REM", "FILTER_UDARA"
+  odometerAt     Int            // Angka odometer saat servis
+  serviceDate    DateTime       @default(now())
+  cost           Decimal?       @db.Decimal(12, 2) // IDR
+  workshopName   String?
+  notes          String?        @db.Text
+  status         String?        @default("SELESAI")
+  vehicle        VehicleProfile @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  createdAt      DateTime       @default(now())
+
+  // Composite index untuk urutan tanggal servis per mobil
+  @@index([vehicleId, serviceDate(sort: Desc)])
+}
+
+model RepairLog {
+  id             String         @id @default(cuid())
+  vehicleId      String
+  complaint      String         @db.Text
+  aiDiagnosis    String         @db.Text
+  partsReplaced  String?        @db.Text
+  totalCost      Decimal?       @db.Decimal(12, 2)
+  isResolved     Boolean        @default(false)
+  vehicle        VehicleProfile @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  createdAt      DateTime       @default(now())
+
+  // Composite index untuk histori perbaikan per mobil
+  @@index([vehicleId, createdAt(sort: Desc)])
+}
+
+model DocumentEmbedding {
+  id        String   @id @default(cuid())
+  category  String   // e.g. "MANUAL_BENGKEL", "GEJALA_RUSAK"
+  title     String
+  content   String   @db.Text
+  embedding String?  @db.Text // Serialized vector embedding (atau aktifkan pgvector jika dll terpasang)
+  createdAt DateTime @default(now())
+
+  @@index([category])
+}
+
+model DiagnosticAuditLog {
+  id             String   @id @default(cuid())
+  userId         String?
+  rawComplaint   String   @db.Text
+  detectedRisk   String   // e.g. "LOW", "MODERATE", "CRITICAL_SAFETY"
+  toolsTriggered String[] // Daftar tools yang dipanggil (YouTube, E-Commerce)
+  modelUsed      String
+  ipAddress      String?
+  user           User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt      DateTime @default(now())
+
+  @@index([userId, createdAt(sort: Desc)])
+}
+
+model TargetCar {
+  id                   String   @id @default(cuid())
+  userId               String
+  title                String
+  make                 String
+  model                String
+  year                 Int
+  transmission         String   @default("Manual")
+  askingPrice          Decimal? @db.Decimal(15, 2)
+  askingPriceFormatted String?
+  odometer             Int      @default(0)
+  sellerDescription    String?  @db.Text
+  sellerClaims         String[] @default([])
+  imageUrl             String?  @db.Text
+  images               String[] @default([])
+  sourceUrl            String?  @db.Text
+  sourcePlatform       String?
+  manualGuideText      String?  @db.Text
+  manualFileName       String?
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@index([userId, createdAt(sort: Desc)])
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  userId    String
+  role      String   // "user" | "assistant"
+  content   String   @db.Text
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt(sort: Asc)])
+}

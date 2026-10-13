@@ -1,0 +1,53 @@
+Bertindaklah sebagai tim Product Engineering kelas dunia yang terdiri dari Principal Full Stack Developer, Lead UI/UX Designer (Promax & Frontend Design), Senior UX Writer/Copywriter, Cloud Security Architect (OWASP ASI), dan Automotive Database Architect.
+
+Saya sedang membangun aplikasi web AI: Panduan Inspeksi Mobil Bekas & Asisten Mekanik Otodidak bernama BengkelSaku.
+
+Tech Stack:
+- Framework: Next.js (App Router), TypeScript
+- Auth: NextAuth.js (Auth.js) v5 (Google OAuth SSO)
+- Styling & UI: Tailwind CSS, Shadcn/UI, Mobile-First Workshop Ergonomics
+- Database & ORM: PostgreSQL 18 (Localhost: postgresql://postgres:server!2345@localhost:5432/BengkelSaku, pgvector untuk RAG), Prisma/Drizzle ORM
+- AI Engine: Vercel AI SDK, Groq API / Gemini API (Vision LLM)
+- External APIs: YouTube Data API v3, Public Free API (DummyJSON / Suku Cadang)
+
+Panduan Keahlian & Standar Kualitas (Skills & Guidelines):
+1. UI/UX Promax & Frontend Design (Ergonomi Bengkel / Mobile-First):
+   - Desain mobile-first untuk smartphone. Area sentuh (touch target) tombol minimal 48px (mudah ditekan tangan berminyak/sarung tangan).
+   - High-contrast Dark Mode teroptimasi untuk area kerja minim cahaya (kolong mobil/bawah kap mesin).
+   - Hirarki visual jelas, status visual instan (indikator bahaya/warning/aman), clean layout tanpa distraksi.
+
+2. UX Writing, Copywriting & Brand Voice:
+   - Nada bicara: Menenangkan, suportif, anti-panik, dan profesional.
+   - Terjemahkan jargon teknis rumit (viskositas, tie rod, bushing arm, dsb) menjadi istilah awam yang mudah dipahami.
+   - Safety First Disclaimers: Selipkan peringatan keselamatan wajib sebelum panduan mekanik (misal: penggunaan jack stand, bahaya cairan panas radiator, pemutusan aki).
+
+3. Keamanan AI Agent (OWASP ASI Top 10 Compliance):
+   - Input Validation & Prompt Injection Protection (ASI-01): Sanitasi dan validasi input user/OCR gambar sebelum diproses oleh Vision LLM.
+   - Insecure Tool Use Governance (ASI-02): Terapkan allowlist parameter ketat pada pemanggilan YouTube API dan DummyJSON. Cegah arbitrary tool execution.
+   - Deterministic Guardrails (ASI-08): Batasi ruang lingkup instruksi AI hanya pada ranah otomotif; tolak instruksi perbaikan yang melanggar keselamatan fisik.
+   - Audit Trail & Logging (ASI-06): Catat log terstruktur untuk setiap diagnosa AI dan pemanggilan tool untuk audit keselamatan.
+
+4. Database Architecture & SQL Optimization:
+   - Indexing Strategy: Terapkan composite index pada kolom pencarian riwayat servis (vehicleId + serviceDate/odometer).
+   - Vector Search Optimization: Terapkan index HNSW / IVFFlat pada tabel DocumentEmbeddings untuk pencarian RAG cepat.
+   - Query Hygiene: Hindari masalah N+1 queries, gunakan explicit column selection (hindari SELECT * pada data besar), dan gunakan cursor-based pagination pada tabel log servis.
+
+Fitur & Syarat Integrasi Utama (Zero-Config untuk Testing):
+1. Otentikasi: Implementasikan Google OAuth (SSO) menggunakan NextAuth.js (Auth.js) v5.
+2. Manajemen Kendaraan (Garage): Registrasi mobil milik pengguna (Merek, Model, Tahun, VIN/Plat Nomor, Odometer Terakhir, Tanggal Servis/Ganti Oli Terakhir, Foto Mobil).
+3. Proactive Maintenance System: Notifikasi/rekomendasi pintar di dashboard berbasis interval waktu dan pembacaan odometer terakhir.
+4. LLM API & Vision: Integrasi Groq API / Gemini API via Vercel AI SDK dengan System Prompt Mekanik Ahli.
+5. Suku Cadang API: Integrasi API publik (DummyJSON) sebagai simulasi katalog pencarian spare part.
+6. Video Tutorial API: Integrasi YouTube Data API v3 untuk video panduan reparasi DIY.
+7. Fallback Mechanism: Logika fallback data otomatis (dummy data) jika API key kosong agar aplikasi tetap bisa di-build dan UI dapat diuji secara lokal.
+
+Tugas Anda (Output yang diminta secara berurutan):
+1. Arsitektur & Struktur Folder: Struktur Next.js App Router lengkap (app/(auth), app/(dashboard), components/ui, services/, lib/db, lib/security, types/).
+2. Skema Database Ekstensif & Teroptimasi: Skema Prisma/Drizzle lengkap untuk Account, Session, User, VehicleProfile, MaintenanceLogs, DocumentEmbeddings (pgvector), dan RepairLogs beserta definisi index performa.
+3. File .env.example Lengkap: Variabel environment lengkap beserta URL pendaftaran resmi Google Cloud Console, Groq/Gemini, YouTube Data API.
+4. Kode Logic Maintenance (TypeScript): Fungsi utility (calculateNextService.ts) dengan copywriting rekomendasi servis ramah dan aman.
+5. Kode API Route Backend (AI Agent): Kerangka Route Handler orkestrasi Vision LLM -> YouTube API -> E-Commerce API dengan input validation OWASP ASI dan prompt mekanik ahli.
+6. Kode UI Component Frontend: Komponen VehicleDashboardCard.tsx responsif mobile-first, high contrast dark mode, touch target 48px, dan tombol aksi AI.
+
+Catatan Operasional & Efisiensi:
+- Komunikasi respons menggunakan mode caveman ultra untuk meminimalkan token dan menjaga keakuratan teknis.
